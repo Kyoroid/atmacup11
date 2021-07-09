@@ -1,0 +1,4 @@
+.vscode
+py38env
+__pycache__
+*.ckpt
