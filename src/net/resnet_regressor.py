@@ -1,6 +1,7 @@
 import torch
 from torch.nn import Linear, Sequential, Flatten, ReLU, Dropout
-from torch.optim import SGD
+from torch.optim import Adam
+from torch.optim.lr_scheduler import OneCycleLR
 import torch.nn.functional as F
 from torchvision.models.resnet import resnet18
 import pytorch_lightning as pl
@@ -10,7 +11,7 @@ class ResNet18Regressor(pl.LightningModule):
     def __init__(self):
         super().__init__()
         self.encoder = resnet18(pretrained=False)
-        self.regressor = Sequential(Flatten(), Dropout(p=0.1), Linear(1000, 1))
+        self.regressor = Sequential(Flatten(), Dropout(p=0.5), Linear(1000, 1))
 
     def forward(self, x):
         x = self.encoder(x)
@@ -18,8 +19,25 @@ class ResNet18Regressor(pl.LightningModule):
         return y
 
     def configure_optimizers(self):
-        optimizer = SGD(self.parameters(), lr=1e-4)
-        return optimizer
+        init_lr = 5e-4
+        pct_start = 0.1
+        steps_per_epoch = len(self.train_dataloader())
+        optimizer = Adam(self.parameters(), lr=init_lr)
+        scheduler = OneCycleLR(
+            optimizer,
+            max_lr=init_lr,
+            steps_per_epoch=steps_per_epoch,
+            epochs=self.trainer.max_epochs,
+            pct_start=pct_start,
+            anneal_strategy="cos",
+        )
+        return {
+            "optimizer": optimizer,
+            "lr_scheduler": {
+                "scheduler": scheduler,
+                "interval": "step",
+            },
+        }
 
     def training_step(self, train_batch, batch_idx):
         x, y_gt = train_batch

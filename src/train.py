@@ -1,12 +1,16 @@
 import argparse
 from pathlib import Path
 import logging
+from albumentations.augmentations.transforms import RandomBrightness
 import torch
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import DataLoader
 import pytorch_lightning as pl
 from pytorch_lightning import loggers
+from pytorch_lightning.callbacks import (
+    LearningRateMonitor,
+    ModelCheckpoint,
+)
 import albumentations as A
-from albumentations.augmentations import transforms
 from albumentations.pytorch.transforms import ToTensorV2
 from data import AtmaDataset
 from net import ResNet18Regressor
@@ -14,31 +18,52 @@ from net import ResNet18Regressor
 
 def main(
     train_csv: Path,
+    val_csv: Path,
     image_dir: Path,
-    checkpoint: Path,
     max_epochs: int,
     logdir: Path,
     batch_size: int,
     device: str,
 ):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    transform = A.Compose(
+    train_transform = A.Compose(
         [
-            A.Flip(),
-            A.RandomRotate90(),
-            A.Resize(width=224, height=224),
-            transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5)),
+            A.HorizontalFlip(p=0.5),
+            A.PadIfNeeded(256, 256),
+            A.RandomCrop(224, 224, always_apply=True),
+            A.RandomBrightness(limit=0.1, p=0.5),
+            A.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5), always_apply=True),
             ToTensorV2(),
         ]
     )
-    dataset = AtmaDataset(train_csv, image_dir, transform=transform)
-    train_subset, valid_subset = random_split(dataset, [3937 - 800, 800])
-    train_loader = DataLoader(train_subset, batch_size=batch_size, num_workers=4)
-    val_loader = DataLoader(valid_subset, batch_size=batch_size, num_workers=4)
+    val_transform = A.Compose(
+        [
+            A.PadIfNeeded(256, 256),
+            A.CenterCrop(224, 224, always_apply=True),
+            A.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5), always_apply=True),
+            ToTensorV2(),
+        ]
+    )
+    train_dataset = AtmaDataset(train_csv, image_dir, transform=train_transform)
+    val_dataset = AtmaDataset(val_csv, image_dir, transform=val_transform)
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, num_workers=4)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size, num_workers=4)
     model = ResNet18Regressor().to(device)
 
     logger = loggers.TensorBoardLogger(logdir)
-    trainer = pl.Trainer(gpus=1, max_epochs=max_epochs, logger=logger)
+    lr_monitor = LearningRateMonitor(logging_interval="epoch")
+    checkpoint_callback = ModelCheckpoint(
+        monitor="loss/val",
+        filename="{epoch}-{val_loss:.2f}",
+        save_top_k=1,
+        save_last=True,
+    )
+    trainer = pl.Trainer(
+        gpus=1,
+        max_epochs=max_epochs,
+        logger=logger,
+        callbacks=[lr_monitor, checkpoint_callback],
+    )
     trainer.fit(model, train_loader, val_loader)
 
 
@@ -51,16 +76,19 @@ def parse_args():
     parser.add_argument(
         "--train_csv",
         type=Path,
-        default=root_dir / "train.csv",
-        help="Location of train.csv.",
+        default=root_dir / "train_cv0.csv",
+        help="Location of train_cvX.csv.",
     )
     parser.add_argument(
-        "--checkpoint", type=Path, default="../checkpoint", help="Path to save models."
+        "--val_csv",
+        type=Path,
+        default=root_dir / "val_cv0.csv",
+        help="Location of val_cvX.csv.",
     )
     parser.add_argument(
         "--device", type=str, default="cuda:0", help="Device used for calculation."
     )
-    parser.add_argument("--batch_size", type=int, default=16, help="Batch size.")
+    parser.add_argument("--batch_size", type=int, default=32, help="Batch size.")
     parser.add_argument(
         "--max_epochs", type=int, default=100, help="Max number of epochs."
     )

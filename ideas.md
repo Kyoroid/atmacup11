@@ -41,3 +41,13 @@
             - ロガーを差し替え可能らしい。
             - 使い方が頻繁に変わるのか、ブログ記事などがあてにならないことが多い。
                 - 公式サイトを信じる。特に全文検索ができるpdf版ドキュメントが便利。
+
+# 2021/07/10
+
+- モデルv1.1
+    - Warmupを試す
+        - OneCycleLR
+        - pytorch-lightning の初期設定では、ステップ毎に `optimizer.step()` が呼ばれない。
+            - [configure_optimizers()](https://pytorch-lightning.readthedocs.io/en/latest/api/pytorch_lightning.core.lightning.html#pytorch_lightning.core.lightning.LightningModule.configure_optimizers) に設定方法の記載がある。
+        - 学習率のモニタリング
+            - [LearningRateMonitor](https://pytorch-lightning.readthedocs.io/en/latest/extensions/generated/pytorch_lightning.callbacks.LearningRateMonitor.html) を使って、ステップ毎やエポック毎に記録が可能。

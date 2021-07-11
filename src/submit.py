@@ -22,16 +22,15 @@ def main(
     device: str,
 ):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    transform = A.Compose(
+    test_transform = A.Compose(
         [
-            A.Flip(),
-            A.RandomRotate90(),
-            A.Resize(width=224, height=224),
-            transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5)),
+            A.PadIfNeeded(256, 256),
+            A.CenterCrop(224, 224, always_apply=True),
+            A.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5), always_apply=True),
             ToTensorV2(),
         ]
     )
-    test_dataset = AtmaTestDataset(test_csv, image_dir, transform=transform)
+    test_dataset = AtmaTestDataset(test_csv, image_dir, transform=test_transform)
     test_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=1)
     model = ResNet18Regressor.load_from_checkpoint(checkpoint_path=ckpt_path).to(device)
     model.eval()
