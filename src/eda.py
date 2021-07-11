@@ -1,3 +1,4 @@
+from itertools import groupby
 from pathlib import Path
 import numpy as np
 import pandas as pd
@@ -26,16 +27,20 @@ def load_test(dataset_dir: Path):
 
 
 #%%
-DATASET_DIR = Path("../dataset_atmaCup11")
+DATASET_DIR = Path("../../dataset_atmaCup11")
 train_df = load_train(DATASET_DIR)
 
 #%%
 train_df.head()
 # %%
 materials_df = load_materials(DATASET_DIR)
-materials_df.groupby("name").count()
 
 #%%
 techniques_df = load_techniques(DATASET_DIR)
-techniques_df.groupby("name").count()
-#%%
+tq_binary_df = pd.get_dummies(techniques_df, columns=["name"]).groupby("object_id").sum()
+pd.merge(train_df, tq_binary_df, how="left", on="object_id")
+# %%
+materials_df = load_materials(DATASET_DIR)
+mt_binary_df = pd.get_dummies(materials_df, columns=["name"]).groupby("object_id").sum()
+pd.merge(train_df, mt_binary_df, how="left", on="object_id")
+# %%

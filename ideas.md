@@ -58,3 +58,22 @@
     - 推論結果
         - train: 0.80くらい
         - public: 0.7683
+
+# 2021/07/11
+
+- materials.csv を年代ごとの採用率に着目して眺めてみる
+    - 絵画に採用される材料の種類は徐々に増えていく。歴史とともに新しい材料が発明されていく。
+    - ink の採用率は初期のほうが高い。
+- テーブルデータをどう使うか?
+    - バイナリラベルに変換してあげて、線形回帰の入力に加える
+        - テストデータにはバイナリラベルがないので、準備が大変そう
+    - 描かれた年だけでなく、materialsも予測するようなモデルを作る
+        - 線形回帰の出力を増やしてあげるだけでよさそう。
+        - 最適化の過程ではバイナリラベルとのBinaryCrossEntropyをとればよい。
+        - 推論時は年の出力だけ見ればよい。
+        - ある程度サンプル数が必要。materials のうち、多く採用されているものを使いたい。
+- materials.csv を使わずに、質感などをモデルに反映できないか?
+    - 描かれているものは関係なく、絵画の質感だけを見てほしい
+    - 絵をばらしてランダムに組み替えればよいのでは?
+        - [Concat tile pooling](https://www.kaggle.com/razamh/panda-concat-tile-pooling-starter-0-79-lb)
+        - [Random Grid Shuffle](https://albumentations.ai/docs/api_reference/augmentations/transforms/#albumentations.augmentations.transforms.RandomGridShuffle)

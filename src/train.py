@@ -1,7 +1,8 @@
 import argparse
 from pathlib import Path
 import logging
-from albumentations.augmentations.transforms import RandomBrightness
+from albumentations.augmentations.geometric.rotate import RandomRotate90
+from albumentations.augmentations.transforms import RandomBrightnessContrast, RandomGridShuffle
 import torch
 from torch.utils.data import DataLoader
 import pytorch_lightning as pl
@@ -13,8 +14,7 @@ from pytorch_lightning.callbacks import (
 import albumentations as A
 from albumentations.pytorch.transforms import ToTensorV2
 from data import AtmaDataset
-from net import ResNet18Regressor, ResNet50Regressor
-from net import EfficientNetB0Regressor
+from net import ResNet18Regressor
 
 
 def main(
@@ -29,18 +29,18 @@ def main(
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     train_transform = A.Compose(
         [
-            A.HorizontalFlip(p=0.5),
-            A.PadIfNeeded(256, 256),
-            A.RandomCrop(224, 224, always_apply=True),
-            A.RandomBrightness(limit=0.1, p=0.5),
+            A.Flip(p=0.5),
+            A.RandomRotate90(p=0.5),
+            A.PadIfNeeded(224, 224),
+            A.RandomGridShuffle((4, 4), always_apply=True),
+            A.RandomBrightnessContrast(brightness_limit=0.1, contrast_limit=0, p=0.5),
             A.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5), always_apply=True),
             ToTensorV2(),
         ]
     )
     val_transform = A.Compose(
         [
-            A.PadIfNeeded(256, 256),
-            A.CenterCrop(224, 224, always_apply=True),
+            A.PadIfNeeded(224, 224),
             A.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5), always_apply=True),
             ToTensorV2(),
         ]
