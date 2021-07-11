@@ -13,7 +13,8 @@ from pytorch_lightning.callbacks import (
 import albumentations as A
 from albumentations.pytorch.transforms import ToTensorV2
 from data import AtmaDataset
-from net import ResNet18Regressor
+from net import ResNet18Regressor, ResNet50Regressor
+from net import EfficientNetB0Regressor
 
 
 def main(
@@ -48,7 +49,7 @@ def main(
     val_dataset = AtmaDataset(val_csv, image_dir, transform=val_transform)
     train_loader = DataLoader(train_dataset, batch_size=batch_size, num_workers=4)
     val_loader = DataLoader(val_dataset, batch_size=batch_size, num_workers=4)
-    model = ResNet18Regressor().to(device)
+    model = ResNet50Regressor().to(device)
 
     logger = loggers.TensorBoardLogger(logdir)
     lr_monitor = LearningRateMonitor(logging_interval="epoch")
@@ -56,7 +57,7 @@ def main(
         monitor="loss/val",
         filename="{epoch}-{val_loss:.2f}",
         save_top_k=1,
-        save_last=True,
+        save_last=False,
     )
     trainer = pl.Trainer(
         gpus=1,

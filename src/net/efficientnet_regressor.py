@@ -1,16 +1,16 @@
 import torch
-from torch.nn import Linear, Sequential, Flatten, Dropout
+from torch.nn import Linear, Sequential, Flatten, ReLU, Dropout
 from torch.optim import Adam
 from torch.optim.lr_scheduler import OneCycleLR
 import torch.nn.functional as F
-from torchvision.models.resnet import resnet18, resnet50
+from efficientnet_pytorch import EfficientNet
 import pytorch_lightning as pl
 
 
-class ResNet18Regressor(pl.LightningModule):
+class EfficientNetB0Regressor(pl.LightningModule):
     def __init__(self):
         super().__init__()
-        self.encoder = resnet18(pretrained=False)
+        self.encoder = EfficientNet.from_name("efficientnet-b0", num_classes=1000)
         self.regressor = Sequential(Flatten(), Dropout(p=0.5), Linear(1000, 1))
 
     def forward(self, x):
@@ -19,7 +19,7 @@ class ResNet18Regressor(pl.LightningModule):
         return y
 
     def configure_optimizers(self):
-        init_lr = 5e-4
+        init_lr = 5e-5
         pct_start = 0.1
         steps_per_epoch = len(self.train_dataloader())
         optimizer = Adam(self.parameters(), lr=init_lr)
@@ -63,31 +63,3 @@ class ResNet18Regressor(pl.LightningModule):
         avg_score = torch.stack([y["score"] for y in outputs]).mean()
         self.log("loss/val", avg_loss)
         self.log("score/val", avg_score)
-
-
-class ResNet50Regressor(ResNet18Regressor):
-    def __init__(self):
-        super().__init__()
-        self.encoder = resnet50(pretrained=False)
-        self.regressor = Sequential(Flatten(), Dropout(p=0.5), Linear(1000, 1))
-
-    def configure_optimizers(self):
-        init_lr = 5e-4
-        pct_start = 0.1
-        steps_per_epoch = len(self.train_dataloader())
-        optimizer = Adam(self.parameters(), lr=init_lr)
-        scheduler = OneCycleLR(
-            optimizer,
-            max_lr=init_lr,
-            steps_per_epoch=steps_per_epoch,
-            epochs=self.trainer.max_epochs,
-            pct_start=pct_start,
-            anneal_strategy="cos",
-        )
-        return {
-            "optimizer": optimizer,
-            "lr_scheduler": {
-                "scheduler": scheduler,
-                "interval": "step",
-            },
-        }
