@@ -51,3 +51,10 @@
             - [configure_optimizers()](https://pytorch-lightning.readthedocs.io/en/latest/api/pytorch_lightning.core.lightning.html#pytorch_lightning.core.lightning.LightningModule.configure_optimizers) に設定方法の記載がある。
         - 学習率のモニタリング
             - [LearningRateMonitor](https://pytorch-lightning.readthedocs.io/en/latest/extensions/generated/pytorch_lightning.callbacks.LearningRateMonitor.html) を使って、ステップ毎やエポック毎に記録が可能。
+    - 交差検証を導入
+        - とりあえず5分割する
+        - 不具合がないかの確認のため、提出時に `train.csv` に対しても予測し、参考スコアを出すようにする
+- submission v1
+    - 推論結果
+        - train: 0.80くらい
+        - public: 0.7683

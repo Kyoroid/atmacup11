@@ -1,0 +1,29 @@
+{
+    "device": "cuda:0",
+    "batch_size": 32,
+    "n_folds": 5,
+    "image_dir": "../dataset_atmaCup11/photos",
+    "train_csv": "../dataset_atmaCup11/train.csv",
+    "test_csv": "../dataset_atmaCup11/test.csv",
+    "submit_csv" : "./submit.csv",
+    "fold_0": {
+        "val_csv": "../dataset_atmaCup11/val_cv0.csv",
+        "ckpt_path": "./logs/default/version_10/checkpoints/epoch=63-val_loss=0.00.ckpt"
+    },
+    "fold_1": {
+        "val_csv": "../dataset_atmaCup11/val_cv1.csv",
+        "ckpt_path": "./logs/default/version_11/checkpoints/epoch=80-val_loss=0.00.ckpt"
+    },
+    "fold_2": {
+        "val_csv": "../dataset_atmaCup11/val_cv2.csv",
+        "ckpt_path": "./logs/default/version_12/checkpoints/epoch=74-val_loss=0.00.ckpt"
+    },
+    "fold_3": {
+        "val_csv": "../dataset_atmaCup11/val_cv3.csv",
+        "ckpt_path": "./logs/default/version_13/checkpoints/epoch=90-val_loss=0.00.ckpt"
+    },
+    "fold_4": {
+        "val_csv": "../dataset_atmaCup11/val_cv4.csv",
+        "ckpt_path": "./logs/default/version_14/checkpoints/epoch=72-val_loss=0.00.ckpt"
+    }
+}
