@@ -49,13 +49,14 @@ def main(
     val_dataset = AtmaDataset(val_csv, image_dir, transform=val_transform)
     train_loader = DataLoader(train_dataset, batch_size=batch_size, num_workers=4)
     val_loader = DataLoader(val_dataset, batch_size=batch_size, num_workers=4)
-    model = ResNet50Regressor().to(device)
+    model = ResNet18Regressor().to(device)
 
     logger = loggers.TensorBoardLogger(logdir)
     lr_monitor = LearningRateMonitor(logging_interval="epoch")
     checkpoint_callback = ModelCheckpoint(
         monitor="loss/val",
-        filename="{epoch}-{val_loss:.2f}",
+        filename="epoch={epoch}-val_loss={loss/val:.2f}",
+        auto_insert_metric_name=False,
         save_top_k=1,
         save_last=False,
     )
