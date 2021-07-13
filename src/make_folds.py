@@ -8,11 +8,24 @@ from sklearn.model_selection import GroupKFold
 
 def main(
     trainval_csv: Path,
+    materials_csv: Path,
     out_dir: Path,
     logdir: Path,
     folds: int,
 ):
     trainval_df = pd.read_csv(trainval_csv)
+
+    materials_df = pd.read_csv(materials_csv)
+    mt_binary_df = (
+        pd.get_dummies(materials_df, columns=["name"]).groupby("object_id").sum()
+    )
+    mt_binary_df.rename(
+        columns=lambda x: x[5:] if x[:5] == "name_" else x, inplace=True
+    )
+    trainval_df = pd.merge(
+        trainval_df, mt_binary_df, how="left", on="object_id"
+    ).fillna(0)
+
     X = trainval_df.index.values
     groups = trainval_df["art_series_id"].values
 
@@ -36,6 +49,12 @@ def parse_args():
         type=Path,
         default=root_dir / "train.csv",
         help="Location of train.csv.",
+    )
+    parser.add_argument(
+        "--materials_csv",
+        type=Path,
+        default=root_dir / "materials.csv",
+        help="Location of materials.csv.",
     )
     parser.add_argument(
         "--out_dir",

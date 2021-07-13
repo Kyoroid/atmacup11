@@ -42,8 +42,8 @@ class ResNet18Regressor(pl.LightningModule):
     def training_step(self, train_batch, batch_idx):
         x, y_gt = train_batch
         y_pred = self.forward(x)
-        loss = torch.sqrt(F.mse_loss(y_pred, y_gt) + 1e-8)
-        return loss
+        loss_rmse = torch.sqrt(F.mse_loss(y_pred, y_gt) + 1e-8)
+        return loss_rmse
 
     def training_epoch_end(self, outputs):
         avg_loss = torch.stack([x["loss"] for x in outputs]).mean()

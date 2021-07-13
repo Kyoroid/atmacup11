@@ -1,8 +1,6 @@
 import argparse
 from pathlib import Path
 import logging
-from albumentations.augmentations.geometric.rotate import RandomRotate90
-from albumentations.augmentations.transforms import RandomBrightnessContrast, RandomGridShuffle
 import torch
 from torch.utils.data import DataLoader
 import pytorch_lightning as pl
@@ -14,7 +12,7 @@ from pytorch_lightning.callbacks import (
 import albumentations as A
 from albumentations.pytorch.transforms import ToTensorV2
 from data import AtmaDataset
-from net import ResNet18Regressor
+from net import ResNet18Mixer
 
 
 def main(
@@ -29,10 +27,9 @@ def main(
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     train_transform = A.Compose(
         [
-            A.Flip(p=0.5),
-            A.RandomRotate90(p=0.5),
-            A.PadIfNeeded(224, 224),
-            A.RandomGridShuffle((4, 4), always_apply=True),
+            A.HorizontalFlip(p=0.5),
+            A.PadIfNeeded(256, 256),
+            A.RandomCrop(224, 224, always_apply=True),
             A.RandomBrightnessContrast(brightness_limit=0.1, contrast_limit=0, p=0.5),
             A.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5), always_apply=True),
             ToTensorV2(),
@@ -40,16 +37,22 @@ def main(
     )
     val_transform = A.Compose(
         [
-            A.PadIfNeeded(224, 224),
+            A.PadIfNeeded(256, 256),
+            A.CenterCrop(224, 224, always_apply=True),
             A.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5), always_apply=True),
             ToTensorV2(),
         ]
     )
-    train_dataset = AtmaDataset(train_csv, image_dir, transform=train_transform)
-    val_dataset = AtmaDataset(val_csv, image_dir, transform=val_transform)
+    categories = ["ink", "pencil", "watercolor (paint)"]
+    train_dataset = AtmaDataset(
+        train_csv, image_dir, transform=train_transform, categories=categories
+    )
+    val_dataset = AtmaDataset(
+        val_csv, image_dir, transform=val_transform, categories=categories
+    )
     train_loader = DataLoader(train_dataset, batch_size=batch_size, num_workers=4)
     val_loader = DataLoader(val_dataset, batch_size=batch_size, num_workers=4)
-    model = ResNet18Regressor().to(device)
+    model = ResNet18Mixer(n_categories=len(categories)).to(device)
 
     logger = loggers.TensorBoardLogger(logdir)
     lr_monitor = LearningRateMonitor(logging_interval="epoch")
