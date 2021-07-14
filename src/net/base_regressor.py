@@ -2,15 +2,15 @@ from abc import ABC
 import torch
 from torch.optim import Adam
 import torch.nn.functional as F
-from torch.optim.lr_scheduler import StepLR
+from torch.optim.lr_scheduler import LambdaLR
 import pytorch_lightning as pl
 
 
 class BaseRegressor(pl.LightningModule, ABC):
     def configure_optimizers(self):
-        init_lr = 2e-4
+        init_lr = 5e-4
         optimizer = Adam(self.parameters(), lr=init_lr)
-        scheduler = StepLR(optimizer, step_size=50, gamma=0.1)
+        scheduler = LambdaLR(optimizer, lambda e: 1)
         return {
             "optimizer": optimizer,
             "lr_scheduler": {
