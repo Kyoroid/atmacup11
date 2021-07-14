@@ -1,13 +1,13 @@
-import torch
-from torch.nn import Linear, Sequential, Flatten, ReLU, Dropout
+from torch.nn import Linear, Sequential, Flatten, Dropout
 from torch.optim import Adam
-from torch.optim.lr_scheduler import OneCycleLR
 import torch.nn.functional as F
+from torch.optim.lr_scheduler import LambdaLR
 from efficientnet_pytorch import EfficientNet
-import pytorch_lightning as pl
+
+from net.base_regressor import BaseRegressor
 
 
-class EfficientNetB0Regressor(pl.LightningModule):
+class EfficientNetB0Regressor(BaseRegressor):
     def __init__(self):
         super().__init__()
         self.encoder = EfficientNet.from_name("efficientnet-b0", num_classes=1000)
@@ -20,46 +20,12 @@ class EfficientNetB0Regressor(pl.LightningModule):
 
     def configure_optimizers(self):
         init_lr = 5e-5
-        pct_start = 0.1
-        steps_per_epoch = len(self.train_dataloader())
         optimizer = Adam(self.parameters(), lr=init_lr)
-        scheduler = OneCycleLR(
-            optimizer,
-            max_lr=init_lr,
-            steps_per_epoch=steps_per_epoch,
-            epochs=self.trainer.max_epochs,
-            pct_start=pct_start,
-            anneal_strategy="cos",
-        )
+        scheduler = LambdaLR(optimizer, lr_lambda=lambda epoch: 0.95 ** epoch)
         return {
             "optimizer": optimizer,
             "lr_scheduler": {
                 "scheduler": scheduler,
-                "interval": "step",
+                "interval": "epoch",
             },
         }
-
-    def training_step(self, train_batch, batch_idx):
-        x, y_gt = train_batch
-        y_pred = self.forward(x)
-        loss = torch.sqrt(F.mse_loss(y_pred, y_gt) + 1e-8)
-        return loss
-
-    def training_epoch_end(self, outputs):
-        avg_loss = torch.stack([x["loss"] for x in outputs]).mean()
-        self.log("loss/train", avg_loss)
-
-    def validation_step(self, val_batch, batch_idx):
-        x, y_gt = val_batch
-        y_pred = self.forward(x)
-        loss = torch.sqrt(F.mse_loss(y_pred, y_gt) + 1e-8)
-        categorical_pred = torch.clamp((y_pred - 1550) / 100, min=0, max=3)
-        categorical_gt = torch.clamp((y_gt - 1550) / 100, min=0, max=3)
-        score = torch.sqrt(F.mse_loss(categorical_pred, categorical_gt) + 1e-8)
-        return {"val_loss": loss, "score": score}
-
-    def validation_epoch_end(self, outputs):
-        avg_loss = torch.stack([y["val_loss"] for y in outputs]).mean()
-        avg_score = torch.stack([y["score"] for y in outputs]).mean()
-        self.log("loss/val", avg_loss)
-        self.log("score/val", avg_score)

@@ -12,7 +12,7 @@ from pytorch_lightning.callbacks import (
 import albumentations as A
 from albumentations.pytorch.transforms import ToTensorV2
 from data import AtmaDataset
-from net import ResNet18Mixer
+from net import ResNet18Regressor
 
 
 def main(
@@ -43,16 +43,12 @@ def main(
             ToTensorV2(),
         ]
     )
-    categories = ["ink", "pencil", "watercolor (paint)"]
-    train_dataset = AtmaDataset(
-        train_csv, image_dir, transform=train_transform, categories=categories
-    )
-    val_dataset = AtmaDataset(
-        val_csv, image_dir, transform=val_transform, categories=categories
-    )
+    # categories = ["ink", "pencil", "watercolor (paint)"]
+    train_dataset = AtmaDataset(train_csv, image_dir, transform=train_transform)
+    val_dataset = AtmaDataset(val_csv, image_dir, transform=val_transform)
     train_loader = DataLoader(train_dataset, batch_size=batch_size, num_workers=4)
     val_loader = DataLoader(val_dataset, batch_size=batch_size, num_workers=4)
-    model = ResNet18Mixer(n_categories=len(categories)).to(device)
+    model = ResNet18Regressor().to(device)
 
     logger = loggers.TensorBoardLogger(logdir)
     lr_monitor = LearningRateMonitor(logging_interval="epoch")
@@ -95,7 +91,7 @@ def parse_args():
     )
     parser.add_argument("--batch_size", type=int, default=32, help="Batch size.")
     parser.add_argument(
-        "--max_epochs", type=int, default=100, help="Max number of epochs."
+        "--max_epochs", type=int, default=300, help="Max number of epochs."
     )
     parser.add_argument(
         "--logdir", type=Path, default="./logs", help="Path to save logs."

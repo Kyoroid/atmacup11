@@ -77,3 +77,22 @@
     - 絵をばらしてランダムに組み替えればよいのでは?
         - [Concat tile pooling](https://www.kaggle.com/razamh/panda-concat-tile-pooling-starter-0-79-lb)
         - [Random Grid Shuffle](https://albumentations.ai/docs/api_reference/augmentations/transforms/#albumentations.augmentations.transforms.RandomGridShuffle)
+
+
+# 2021/07/12
+
+- 採用率が高く、年代を経ると増減する材料を予測してみる
+    - ink, pencil, watercolor (paint)
+
+# 2021/07/14
+
+- version_19 (削除済み)
+- Schedulerを停止し、固定学習率でAdamをひたすら回してみる
+    - epoch<100 くらいで下げ止まり、それ以降は過学習気味に。
+- version_20
+    - Schedulerを指数減少に切り替え (epoch**0.95)、ひたすら回してみる
+    - Warmupと同じ降下のしかたで、lossの振幅を大きく抑えることができた。
+    - 学習率を下げることに意味はありそう。
+    - Warmupと見比べてみる
+        - Warmupで非常に小さい学習率になったあたりから、一気にlossが落ち始めている。
+        - 落とし方のコツがありそう
