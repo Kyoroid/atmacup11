@@ -91,7 +91,7 @@ def parse_args():
     )
     parser.add_argument("--batch_size", type=int, default=32, help="Batch size.")
     parser.add_argument(
-        "--max_epochs", type=int, default=300, help="Max number of epochs."
+        "--max_epochs", type=int, default=100, help="Max number of epochs."
     )
     parser.add_argument(
         "--logdir", type=Path, default="./logs", help="Path to save logs."

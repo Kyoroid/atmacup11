@@ -2,7 +2,7 @@ from abc import ABC
 import torch
 from torch.optim import Adam
 import torch.nn.functional as F
-from torch.optim.lr_scheduler import LambdaLR
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 import pytorch_lightning as pl
 
 
@@ -10,12 +10,13 @@ class BaseRegressor(pl.LightningModule, ABC):
     def configure_optimizers(self):
         init_lr = 5e-4
         optimizer = Adam(self.parameters(), lr=init_lr)
-        scheduler = LambdaLR(optimizer, lambda e: 1)
+        scheduler = ReduceLROnPlateau(optimizer, mode="min", factor=0.25)
         return {
             "optimizer": optimizer,
             "lr_scheduler": {
                 "scheduler": scheduler,
                 "interval": "epoch",
+                "monitor": "loss/val",
             },
         }
 
