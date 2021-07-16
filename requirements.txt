@@ -15,4 +15,5 @@ torch==1.9.0+cu111
 torchvision==0.10.0+cu111
 torchaudio===0.9.0
 pytorch-lightning
-efficientnet_pytorch
+test_tube
+timm

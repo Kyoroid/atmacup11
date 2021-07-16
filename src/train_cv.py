@@ -29,10 +29,6 @@ def parse_args():
         help="Location of val_cvX.csv.",
     )
     parser.add_argument(
-        "--device", type=str, default="cuda:0", help="Device used for calculation."
-    )
-    parser.add_argument("--batch_size", type=int, default=32, help="Batch size.")
-    parser.add_argument(
         "--max_epochs", type=int, default=100, help="Max number of epochs."
     )
     parser.add_argument(
@@ -52,6 +48,4 @@ if __name__ == "__main__":
             image_dir=args.image_dir,
             max_epochs=args.max_epochs,
             logdir=args.logdir,
-            batch_size=args.batch_size,
-            device=args.device,
         )

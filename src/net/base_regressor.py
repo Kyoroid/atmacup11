@@ -1,29 +1,42 @@
 from abc import ABC
+from pathlib import Path
 import torch
 from torch.optim import Adam
-import torch.nn.functional as F
-from torch.optim.lr_scheduler import ReduceLROnPlateau
+from torch.optim.lr_scheduler import LambdaLR
 import pytorch_lightning as pl
+from loss.rmse import RMSELoss
 
 
 class BaseRegressor(pl.LightningModule, ABC):
+    def __init__(
+        self,
+        cls_name: str,
+        learning_rate: float = 5e-4,
+        ckpt_path: Path = None,
+        *args,
+        **kwargs
+    ):
+        super().__init__()
+        self.save_hyperparameters()
+        self.lr = None
+        self.learning_rate = learning_rate
+        self.rmse = RMSELoss()
+
     def configure_optimizers(self):
-        init_lr = 5e-4
-        optimizer = Adam(self.parameters(), lr=init_lr)
-        scheduler = ReduceLROnPlateau(optimizer, mode="min", factor=0.25)
+        optimizer = Adam(self.parameters(), lr=(self.lr or self.learning_rate))
+        scheduler = LambdaLR(optimizer, lr_lambda=lambda epoch: 0.95 ** epoch)
         return {
             "optimizer": optimizer,
             "lr_scheduler": {
                 "scheduler": scheduler,
                 "interval": "epoch",
-                "monitor": "loss/val",
             },
         }
 
     def training_step(self, train_batch, batch_idx):
         x, y_gt = train_batch
         y_pred = self.forward(x)
-        loss_rmse = torch.sqrt(F.mse_loss(y_pred, y_gt) + 1e-8)
+        loss_rmse = self.rmse(y_pred, y_gt)
         return loss_rmse
 
     def training_epoch_end(self, outputs):
@@ -33,10 +46,10 @@ class BaseRegressor(pl.LightningModule, ABC):
     def validation_step(self, val_batch, batch_idx):
         x, y_gt = val_batch
         y_pred = self.forward(x)
-        loss = torch.sqrt(F.mse_loss(y_pred, y_gt) + 1e-8)
+        loss = self.rmse(y_pred, y_gt)
         categorical_pred = torch.clamp((y_pred - 1550) / 100, min=0, max=3)
         categorical_gt = torch.clamp((y_gt - 1550) / 100, min=0, max=3)
-        score = torch.sqrt(F.mse_loss(categorical_pred, categorical_gt) + 1e-8)
+        score = self.rmse(categorical_pred, categorical_gt)
         return {"val_loss": loss, "score": score}
 
     def validation_epoch_end(self, outputs):

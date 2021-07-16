@@ -1,11 +1,7 @@
 import argparse
 from pathlib import Path
+import logging
 import pytorch_lightning as pl
-from pytorch_lightning import loggers
-from pytorch_lightning.callbacks import (
-    LearningRateMonitor,
-    ModelCheckpoint,
-)
 from data import AtmaDataModule
 from net import *
 
@@ -17,12 +13,11 @@ ARCH = {
 
 
 def main(
+    plot_file: Path,
     architecture: str,
-    image_dir: Path,
     train_csv: Path,
     val_csv: Path,
-    max_epochs: int,
-    logdir: Path,
+    image_dir: Path,
     seed: int,
     ckpt_path: Path = None,
 ):
@@ -34,27 +29,23 @@ def main(
             checkpoint_path=ckpt_path, ckpt_path=str(ckpt_path)
         )
 
-    logger = loggers.TestTubeLogger(logdir, name=architecture)
-    lr_monitor = LearningRateMonitor(logging_interval="epoch")
-    checkpoint_callback = ModelCheckpoint(
-        monitor="loss/val",
-        filename="epoch={epoch}-val_loss={loss/val:.2f}",
-        auto_insert_metric_name=False,
-        save_top_k=1,
-        save_last=False,
-    )
     trainer = pl.Trainer(
         gpus=1,
-        max_epochs=max_epochs,
-        logger=logger,
-        callbacks=[lr_monitor, checkpoint_callback],
     )
-    trainer.fit(model, datamodule=datamodule)
+    lr_finder = trainer.tuner.lr_find(model, datamodule=datamodule)
+    fig = lr_finder.plot(suggest=True)
+    suggested_lr = lr_finder.suggestion()
+    fig.suptitle(model.__class__.__name__, fontsize=16)
+    fig.savefig(plot_file)
+    print(f"Best learning rate: {suggested_lr:.3e}")
 
 
 def parse_args():
     root_dir = Path("../dataset_atmaCup11")
-    parser = argparse.ArgumentParser(description="Train model.")
+    parser = argparse.ArgumentParser(description="Find learning rate.")
+    parser.add_argument(
+        "plot_file", type=Path, help="File name which will drawn learning rate curve."
+    )
     parser.add_argument(
         "--architecture",
         type=str,
@@ -77,12 +68,6 @@ def parse_args():
         default=root_dir / "val_cv0.csv",
         help="Location of val_cvX.csv.",
     )
-    parser.add_argument(
-        "--max_epochs", type=int, default=100, help="Max number of epochs."
-    )
-    parser.add_argument(
-        "--logdir", type=Path, default="./logs", help="Path to save logs."
-    )
     parser.add_argument("--seed", type=int, default=2021, help="Random seed.")
     parser.add_argument(
         "--ckpt_path", type=Path, default=None, help="Checkpoint file."
@@ -92,5 +77,6 @@ def parse_args():
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     args = parse_args()
     main(**vars(args))
