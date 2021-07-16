@@ -24,7 +24,7 @@ class BaseRegressor(pl.LightningModule, ABC):
 
     def configure_optimizers(self):
         optimizer = Adam(self.parameters(), lr=(self.lr or self.learning_rate))
-        scheduler = LambdaLR(optimizer, lr_lambda=lambda epoch: 0.95 ** epoch)
+        scheduler = LambdaLR(optimizer, lr_lambda=lambda epoch: 1.0 ** epoch)
         return {
             "optimizer": optimizer,
             "lr_scheduler": {

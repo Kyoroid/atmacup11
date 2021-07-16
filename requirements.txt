@@ -6,7 +6,7 @@ matplotlib
 scikit-learn
 scikit-image
 opencv-python
-albumentations
+albumentations==1.0.3
 tqdm
 ipykernel
 black
