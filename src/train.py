@@ -24,11 +24,12 @@ def main(
     max_epochs: int,
     logdir: Path,
     seed: int,
+    init_lr: int,
     ckpt_path: Path = None,
 ):
     pl.seed_everything(seed)
     datamodule = AtmaDataModule(image_dir, train_csv, val_csv)
-    model: BaseRegressor = ARCH[architecture]["regressor"]()
+    model: BaseRegressor = ARCH[architecture]["regressor"](learning_rate=init_lr)
     if ckpt_path:
         model = model.load_from_checkpoint(
             checkpoint_path=ckpt_path, ckpt_path=str(ckpt_path)
@@ -61,6 +62,9 @@ def parse_args():
         default="resnet18",
         help="Base architecture.",
         choices=["resnet18", "resnet50", "efficientnetb0"],
+    )
+    parser.add_argument(
+        "--init_lr", type=float, default=1e-4, help="Learning rate at epoch 0."
     )
     parser.add_argument(
         "--image_dir", type=Path, default=root_dir / "photos", help="Image directory."
