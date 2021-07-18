@@ -2,7 +2,7 @@ from abc import ABC
 from pathlib import Path
 import torch
 from torch_optimizer import RAdam
-from torch.optim.lr_scheduler import ExponentialLR
+from torch.optim.lr_scheduler import OneCycleLR
 import pytorch_lightning as pl
 from loss.rmse import RMSELoss
 
@@ -21,21 +21,33 @@ class BaseRegressor(pl.LightningModule, ABC):
         self.lr = None
         self.learning_rate = learning_rate
         self.rmse = RMSELoss()
+        self.embeddings = list()
+        self.categorical_gts = list()
 
     def configure_optimizers(self):
+        pct_start = 0.1
         optimizer = RAdam(self.parameters(), lr=(self.lr or self.learning_rate))
-        scheduler = ExponentialLR(optimizer, gamma=0.95)
+        scheduler = OneCycleLR(
+            optimizer,
+            max_lr=self.learning_rate,
+            steps_per_epoch=len(self.train_dataloader()),
+            epochs=self.trainer.max_epochs,
+            pct_start=pct_start,
+            anneal_strategy="cos",
+        )
+        self.logger.experiment.tag({"optimizer": optimizer.__class__.__name__})
+        self.logger.experiment.tag({"scheduler": scheduler.__class__.__name__})
         return {
             "optimizer": optimizer,
             "lr_scheduler": {
                 "scheduler": scheduler,
-                "interval": "epoch",
+                "interval": "step",
             },
         }
 
     def training_step(self, train_batch, batch_idx):
         x, y_gt = train_batch
-        y_pred = self.forward(x)
+        y_pred, _ = self.forward(x)
         loss_rmse = self.rmse(y_pred, y_gt)
         return loss_rmse
 
@@ -45,10 +57,12 @@ class BaseRegressor(pl.LightningModule, ABC):
 
     def validation_step(self, val_batch, batch_idx):
         x, y_gt = val_batch
-        y_pred = self.forward(x)
+        y_pred, embedding = self.forward(x)
         loss = self.rmse(y_pred, y_gt)
+        self.embeddings.append(embedding)
         categorical_pred = torch.clamp((y_pred - 1550) / 100, min=0, max=3)
         categorical_gt = torch.clamp((y_gt - 1550) / 100, min=0, max=3)
+        self.categorical_gts.append(torch.round(categorical_gt))
         score = self.rmse(categorical_pred, categorical_gt)
         return {"val_loss": loss, "score": score}
 
@@ -57,3 +71,9 @@ class BaseRegressor(pl.LightningModule, ABC):
         avg_score = torch.stack([y["score"] for y in outputs]).mean()
         self.log("loss/val", avg_loss)
         self.log("score/val", avg_score)
+        if (self.trainer.current_epoch+1) % 10 == 0:
+            embeddings = torch.vstack(self.embeddings)
+            categorical_gts = torch.vstack(self.categorical_gts).flatten()
+            self.logger.experiment.add_embedding(embeddings, categorical_gts, global_step=self.current_epoch)
+        self.embeddings = list()
+        self.categorical_gts = list()

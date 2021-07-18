@@ -20,16 +20,11 @@ class EfficientNetB0Regressor(BaseRegressor):
             ckpt_path=ckpt_path,
         )
         self.encoder = timm.create_model("efficientnet_b0", pretrained=False)
-        self.regressor = Sequential(
-            Flatten(), Dropout(p=dropout_rate), Linear(n_features, 1)
-        )
+        self.embedding = Flatten()
+        self.regressor = Sequential(Dropout(p=dropout_rate), Linear(n_features, 1))
 
     def forward(self, x):
         x = self.encoder(x)
+        embedding = self.embedding(x)
         y = self.regressor(x)
-        return y
-
-    def forward(self, x):
-        x = self.encoder(x)
-        y = self.regressor(x)
-        return y
+        return y, embedding

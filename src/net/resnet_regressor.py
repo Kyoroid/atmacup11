@@ -20,14 +20,14 @@ class ResNet18Regressor(BaseRegressor):
             ckpt_path=ckpt_path,
         )
         self.encoder = resnet18(pretrained=False)
-        self.regressor = Sequential(
-            Flatten(), Dropout(p=dropout_rate), Linear(n_features, 1)
-        )
+        self.embedding = Flatten()
+        self.regressor = Sequential(Dropout(p=dropout_rate), Linear(n_features, 1))
 
     def forward(self, x):
         x = self.encoder(x)
+        embedding = self.embedding(x)
         y = self.regressor(x)
-        return y
+        return y, embedding
 
 
 class ResNet50Regressor(BaseRegressor):
@@ -46,11 +46,11 @@ class ResNet50Regressor(BaseRegressor):
             ckpt_path=ckpt_path,
         )
         self.encoder = resnet50(pretrained=False)
-        self.regressor = Sequential(
-            Flatten(), Dropout(p=dropout_rate), Linear(n_features, 1)
-        )
+        self.embedding = Flatten()
+        self.regressor = Sequential(Dropout(p=dropout_rate), Linear(n_features, 1))
 
     def forward(self, x):
         x = self.encoder(x)
+        embedding = self.embedding(x)
         y = self.regressor(x)
-        return y
+        return y, embedding
