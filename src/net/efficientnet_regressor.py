@@ -29,7 +29,6 @@ class EfficientNetB0Regressor(BaseRegressor):
         y = self.regressor(x)
         return y
 
-
     def forward(self, x):
         x = self.encoder(x)
         y = self.regressor(x)

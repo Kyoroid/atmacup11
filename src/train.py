@@ -42,7 +42,7 @@ def main(
         filename="epoch={epoch}-val_loss={loss/val:.2f}",
         auto_insert_metric_name=False,
         save_top_k=1,
-        save_last=False,
+        save_last=True,
     )
     trainer = pl.Trainer(
         gpus=1,

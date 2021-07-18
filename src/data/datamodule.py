@@ -16,7 +16,7 @@ class AtmaDataModule(pl.LightningDataModule):
         test_csv: Path = None,
         batch_size: int = 32,
         num_workers: int = 4,
-        size: int=224,
+        size: int = 224,
     ):
         super().__init__()
         self.image_dir = image_dir
@@ -30,7 +30,7 @@ class AtmaDataModule(pl.LightningDataModule):
         self.train_transform = A.Compose(
             [
                 A.Flip(p=0.5),
-                A.PadIfNeeded(size+size, size+size),
+                A.PadIfNeeded(size + size, size + size),
                 A.RandomCrop(size, size, always_apply=True),
                 A.Normalize(
                     mean=(0.77695272, 0.74355234, 0.67019692),
@@ -42,7 +42,7 @@ class AtmaDataModule(pl.LightningDataModule):
         )
         self.valtest_transform = A.Compose(
             [
-                A.PadIfNeeded(size+size, size+size),
+                A.PadIfNeeded(size + size, size + size),
                 A.CenterCrop(size, size, always_apply=True),
                 A.Normalize(
                     mean=(0.77695272, 0.74355234, 0.67019692),
