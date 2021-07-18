@@ -7,7 +7,7 @@ from net.base_regressor import BaseRegressor
 class ResNet18Regressor(BaseRegressor):
     def __init__(
         self,
-        learning_rate: float = 4e-3,
+        learning_rate: float = 1e-3,
         dropout_rate=0.5,
         n_features=1000,
         ckpt_path: Path = None,

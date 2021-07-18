@@ -28,11 +28,11 @@ def main(
     ckpt_path: Path = None,
 ):
     pl.seed_everything(seed)
-    datamodule = AtmaDataModule(image_dir, train_csv, val_csv)
+    datamodule = AtmaDataModule(image_dir, train_csv, val_csv, batch_size=32)
     model: BaseRegressor = ARCH[architecture]["regressor"](learning_rate=init_lr)
     if ckpt_path:
         model = model.load_from_checkpoint(
-            checkpoint_path=ckpt_path, ckpt_path=str(ckpt_path)
+            checkpoint_path=ckpt_path, ckpt_path=str(ckpt_path), learning_rate=init_lr
         )
 
     logger = loggers.TestTubeLogger(logdir, name=architecture)
@@ -48,7 +48,7 @@ def main(
         gpus=1,
         max_epochs=max_epochs,
         logger=logger,
-        callbacks=[lr_monitor, checkpoint_callback],
+        callbacks=[checkpoint_callback, lr_monitor],
     )
     trainer.fit(model, datamodule=datamodule)
 
@@ -88,9 +88,7 @@ def parse_args():
         "--logdir", type=Path, default="./logs", help="Path to save logs."
     )
     parser.add_argument("--seed", type=int, default=2021, help="Random seed.")
-    parser.add_argument(
-        "--ckpt_path", type=Path, default=None, help="Checkpoint file."
-    )
+    parser.add_argument("--ckpt_path", type=Path, default=None, help="Checkpoint file.")
     args = parser.parse_args()
     return args
 

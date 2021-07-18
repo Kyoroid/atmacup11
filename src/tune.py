@@ -22,7 +22,7 @@ def main(
     ckpt_path: Path = None,
 ):
     pl.seed_everything(seed)
-    datamodule = AtmaDataModule(image_dir, train_csv, val_csv)
+    datamodule = AtmaDataModule(image_dir, train_csv, val_csv, batch_size=32)
     model: BaseRegressor = ARCH[architecture]["regressor"]()
     if ckpt_path:
         model = model.load_from_checkpoint(
@@ -69,9 +69,7 @@ def parse_args():
         help="Location of val_cvX.csv.",
     )
     parser.add_argument("--seed", type=int, default=2021, help="Random seed.")
-    parser.add_argument(
-        "--ckpt_path", type=Path, default=None, help="Checkpoint file."
-    )
+    parser.add_argument("--ckpt_path", type=Path, default=None, help="Checkpoint file.")
     args = parser.parse_args()
     return args
 

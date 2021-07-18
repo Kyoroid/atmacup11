@@ -1,8 +1,8 @@
 from abc import ABC
 from pathlib import Path
 import torch
-from torch.optim import Adam
-from torch.optim.lr_scheduler import LambdaLR
+from torch_optimizer import RAdam
+from torch.optim.lr_scheduler import ExponentialLR
 import pytorch_lightning as pl
 from loss.rmse import RMSELoss
 
@@ -23,8 +23,8 @@ class BaseRegressor(pl.LightningModule, ABC):
         self.rmse = RMSELoss()
 
     def configure_optimizers(self):
-        optimizer = Adam(self.parameters(), lr=(self.lr or self.learning_rate))
-        scheduler = LambdaLR(optimizer, lr_lambda=lambda epoch: 1.0 ** epoch)
+        optimizer = RAdam(self.parameters(), lr=(self.lr or self.learning_rate))
+        scheduler = ExponentialLR(optimizer, gamma=0.95)
         return {
             "optimizer": optimizer,
             "lr_scheduler": {

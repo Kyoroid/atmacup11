@@ -16,6 +16,7 @@ class AtmaDataModule(pl.LightningDataModule):
         test_csv: Path = None,
         batch_size: int = 32,
         num_workers: int = 4,
+        size: int=224,
     ):
         super().__init__()
         self.image_dir = image_dir
@@ -24,27 +25,29 @@ class AtmaDataModule(pl.LightningDataModule):
         self.test_csv = test_csv
         self.batch_size = batch_size
         self.num_workers = num_workers
-        self.dims = (3, 224, 224)
+        self.size = size
+        self.dims = (3, size, size)
         self.train_transform = A.Compose(
             [
-                A.HorizontalFlip(p=0.5),
-                A.PadIfNeeded(256, 256),
-                A.RandomCrop(224, 224, always_apply=True),
-                A.RandomBrightnessContrast(
-                    brightness_limit=0.1, contrast_limit=0, p=0.5
-                ),
+                A.Flip(p=0.5),
+                A.PadIfNeeded(size+size, size+size),
+                A.RandomCrop(size, size, always_apply=True),
                 A.Normalize(
-                    mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5), always_apply=True
+                    mean=(0.77695272, 0.74355234, 0.67019692),
+                    std=(0.16900558, 0.16991152, 0.17102272),
+                    always_apply=True,
                 ),
                 ToTensorV2(),
             ]
         )
         self.valtest_transform = A.Compose(
             [
-                A.PadIfNeeded(256, 256),
-                A.CenterCrop(224, 224, always_apply=True),
+                A.PadIfNeeded(size+size, size+size),
+                A.CenterCrop(size, size, always_apply=True),
                 A.Normalize(
-                    mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5), always_apply=True
+                    mean=(0.77695272, 0.74355234, 0.67019692),
+                    std=(0.16900558, 0.16991152, 0.17102272),
+                    always_apply=True,
                 ),
                 ToTensorV2(),
             ]

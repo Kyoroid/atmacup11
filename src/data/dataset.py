@@ -5,7 +5,6 @@ import pandas as pd
 from PIL import Image
 import torch
 from torch.utils.data import Dataset
-from torchvision.transforms.functional import to_tensor, resize, normalize
 
 
 class AtmaDataset(Dataset):
@@ -36,10 +35,6 @@ class AtmaDataset(Dataset):
         if self.transform:
             augmented = self.transform(image=image)
             image = augmented["image"]
-        else:
-            image = to_tensor(image)
-            image = resize(image, size=(224, 224))
-            image = normalize(image, (0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
         return image, label
 
 
@@ -51,8 +46,4 @@ class AtmaTestDataset(AtmaDataset):
         if self.transform:
             augmented = self.transform(image=image)
             image = augmented["image"]
-        else:
-            image = to_tensor(image)
-            image = resize(image, size=(224, 224))
-            image = normalize(image, (0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
         return image, object_id
