@@ -1,0 +1,6 @@
+key,value
+cls_name,ResNet18Regressor
+learning_rate,0.001
+ckpt_path,logs\resnet18\version_8\checkpoints\epoch=81-val_loss=78.90.ckpt
+dropout_rate,0.5
+n_features,1000
