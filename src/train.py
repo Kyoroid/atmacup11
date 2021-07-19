@@ -28,8 +28,10 @@ def main(
     ckpt_path: Path = None,
 ):
     pl.seed_everything(seed)
-    datamodule = AtmaDataModule(image_dir, train_csv, val_csv, batch_size=32)
-    model: BaseRegressor = ARCH[architecture]["regressor"](learning_rate=init_lr)
+    datamodule = AtmaDataModule(image_dir, train_csv, val_csv, batch_size=64)
+    model: BaseRegressor = ARCH[architecture]["regressor"](
+        learning_rate=init_lr, n_features=512, dropout_rate=0.5
+    )
     if ckpt_path:
         model = model.load_from_checkpoint(
             checkpoint_path=ckpt_path, ckpt_path=str(ckpt_path), learning_rate=init_lr

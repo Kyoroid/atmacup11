@@ -14,7 +14,7 @@ class AtmaDataModule(pl.LightningDataModule):
         train_csv: Path = None,
         val_csv: Path = None,
         test_csv: Path = None,
-        batch_size: int = 32,
+        batch_size: int = 64,
         num_workers: int = 4,
         size: int = 224,
     ):
