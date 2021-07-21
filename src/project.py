@@ -55,7 +55,9 @@ def main(
     labels = torch.vstack(labels)
     images = torch.vstack(images)
 
-    logger.experiment.add_embedding(features, labels.to(torch.int32).tolist(), label_img=images)
+    logger.experiment.add_embedding(
+        features, labels.to(torch.int32).tolist(), label_img=images
+    )
 
 
 def parse_args():

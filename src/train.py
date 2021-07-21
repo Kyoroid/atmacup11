@@ -11,6 +11,7 @@ from net import *
 
 ARCH = {
     "resnet18": {"regressor": ResNet18Regressor},
+    "resnet34": {"regressor": ResNet34Regressor},
     "resnet50": {"regressor": ResNet50Regressor},
     "efficientnetb0": {"regressor": EfficientNetB0Regressor},
 }
@@ -30,7 +31,7 @@ def main(
     pl.seed_everything(seed)
     datamodule = AtmaDataModule(image_dir, train_csv, val_csv, batch_size=64)
     model: BaseRegressor = ARCH[architecture]["regressor"](
-        learning_rate=init_lr, n_features=512, dropout_rate=0.5
+        learning_rate=init_lr, n_features=1000, dropout_rate=0.5
     )
     if ckpt_path:
         model = model.load_from_checkpoint(
@@ -63,7 +64,7 @@ def parse_args():
         type=str,
         default="resnet18",
         help="Base architecture.",
-        choices=["resnet18", "resnet50", "efficientnetb0"],
+        choices=["resnet18", "resnet34", "resnet50", "efficientnetb0"],
     )
     parser.add_argument(
         "--init_lr", type=float, default=1e-4, help="Learning rate at epoch 0."

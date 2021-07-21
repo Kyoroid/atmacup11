@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
 import torch
-from torch_optimizer import RAdam
-from torch.optim.lr_scheduler import OneCycleLR
+from torch.optim import Adam
+from torch.optim.lr_scheduler import StepLR
 import pytorch_lightning as pl
 from loss.rmse import RMSELoss
 
@@ -23,15 +23,11 @@ class BaseRegressor(pl.LightningModule, ABC):
         self.rmse = RMSELoss()
 
     def configure_optimizers(self):
-        pct_start = 0.1
-        optimizer = RAdam(self.parameters(), lr=(self.lr or self.learning_rate))
-        scheduler = OneCycleLR(
+        optimizer = Adam(self.parameters(), lr=(self.lr or self.learning_rate))
+        scheduler = StepLR(
             optimizer,
-            max_lr=self.learning_rate,
-            steps_per_epoch=len(self.train_dataloader()),
-            epochs=self.trainer.max_epochs,
-            pct_start=pct_start,
-            anneal_strategy="cos",
+            step_size=50,
+            gamma=0.2,
         )
         self.logger.experiment.tag({"optimizer": optimizer.__class__.__name__})
         self.logger.experiment.tag({"scheduler": scheduler.__class__.__name__})
@@ -39,7 +35,7 @@ class BaseRegressor(pl.LightningModule, ABC):
             "optimizer": optimizer,
             "lr_scheduler": {
                 "scheduler": scheduler,
-                "interval": "step",
+                "interval": "epoch",
             },
         }
 
