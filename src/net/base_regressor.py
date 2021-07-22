@@ -26,8 +26,8 @@ class BaseRegressor(pl.LightningModule, ABC):
         optimizer = Adam(self.parameters(), lr=(self.lr or self.learning_rate))
         scheduler = StepLR(
             optimizer,
-            step_size=50,
-            gamma=0.2,
+            step_size=70,
+            gamma=0.25,
         )
         self.logger.experiment.tag({"optimizer": optimizer.__class__.__name__})
         self.logger.experiment.tag({"scheduler": scheduler.__class__.__name__})
