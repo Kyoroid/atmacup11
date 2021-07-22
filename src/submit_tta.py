@@ -4,6 +4,7 @@ from pathlib import Path
 import json
 import numpy as np
 import pandas as pd
+import pytorch_lightning as pl
 from sklearn.metrics import mean_squared_error
 import torch
 from torch.utils.data import DataLoader
@@ -15,24 +16,27 @@ from tqdm.auto import tqdm
 
 
 def main():
+    pl.seed_everything(2021)
+
     conf = None
     with Path("./config/submission_v2.json").open(mode="r") as f:
         conf = json.load(f)
 
     device = torch.device(str(conf["device"]) if torch.cuda.is_available() else "cpu")
     size = 224
-    valtest_transform = A.Compose(
-        [
-            A.PadIfNeeded(size + size, size + size),
-            A.CenterCrop(size, size, always_apply=True),
-            A.Normalize(
-                mean=(0.77695272, 0.74355234, 0.67019692),
-                std=(0.16900558, 0.16991152, 0.17102272),
-                always_apply=True,
-            ),
-            ToTensorV2(),
-        ]
-    )
+    tta_transform = A.Compose(
+            [
+                A.Flip(p=0.5),
+                A.PadIfNeeded(size + size, size + size),
+                A.RandomCrop(size, size, always_apply=True),
+                A.Normalize(
+                    mean=(0.77695272, 0.74355234, 0.67019692),
+                    std=(0.16900558, 0.16991152, 0.17102272),
+                    always_apply=True,
+                ),
+                ToTensorV2(),
+            ]
+        )
 
     train_csv = Path(conf["train_csv"])
     test_csv = Path(conf["test_csv"])
@@ -58,27 +62,50 @@ def main():
         )
         model.eval()
 
-        val_dataset = AtmaTestDataset(val_csv, image_dir, transform=valtest_transform)
-        val_loader = DataLoader(
+        val_dataset = AtmaTestDataset(val_csv, image_dir, transform=tta_transform)
+        n_size = len(DataLoader(
             val_dataset, batch_size=batch_size, num_workers=1, shuffle=False
-        )
-        for image, object_id in tqdm(val_loader, total=len(val_loader)):
-            image = image.to(device)
-            y_pred = model(image)
-            train_gt.loc[object_id, "pred_float"] = (
-                y_pred.cpu().detach().numpy().flatten()
-            )
+        ))
 
-        test_dataset = AtmaTestDataset(test_csv, image_dir, transform=valtest_transform)
+        val_loaders = []
+        for j in range(4):
+            val_loader = DataLoader(
+                val_dataset, batch_size=batch_size, num_workers=1, shuffle=False
+            )
+            val_loaders.append(iter(val_loader))
+        for i in tqdm(range(n_size)):
+            data = []
+            for j in range(4):
+                image, object_id = next(val_loaders[j])
+                image = image.to(device)
+                y_pred = model(image)
+                data.append(y_pred.cpu().detach().numpy().flatten())
+            data_s = np.vstack(data).mean(axis=0)
+            train_gt.loc[object_id, "pred_float"] = data_s
+
+        test_dataset = AtmaTestDataset(test_csv, image_dir, transform=tta_transform)
         test_loader = DataLoader(
             test_dataset, batch_size=batch_size, num_workers=1, shuffle=False
         )
-        for image, object_id in tqdm(test_loader, total=len(test_loader)):
-            image = image.to(device)
-            y_pred = model(image)
-            submit_df.loc[object_id, f"target_{fold}"] = (
-                y_pred.cpu().detach().numpy().flatten()
+        n_size = len(DataLoader(
+            test_dataset, batch_size=batch_size, num_workers=1, shuffle=False
+        ))
+
+        test_loaders = []
+        for j in range(4):
+            test_loader = DataLoader(
+                test_dataset, batch_size=batch_size, num_workers=1, shuffle=False
             )
+            test_loaders.append(iter(test_loader))
+        for i in tqdm(range(n_size)):
+            data = []
+            for j in range(4):
+                image, object_id = next(test_loaders[j])
+                image = image.to(device)
+                y_pred = model(image)
+                data.append(y_pred.cpu().detach().numpy().flatten())
+            data_s = np.vstack(data).mean(axis=0)
+            submit_df.loc[object_id, f"target_{fold}"] = data_s
 
     fold_columns = [f"target_{fold}" for fold in range(n_folds)]
     submit_df["target_float"] = submit_df[fold_columns].mean(axis=1, skipna=True)
