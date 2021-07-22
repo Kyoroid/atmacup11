@@ -1,0 +1,1 @@
+{"name": "resnet18", "version": 1, "tags_path": "pl_logs/resnet18/version_1/meta_tags.csv", "metrics_path": "pl_logs/resnet18/version_1/metrics.csv", "autosave": false, "description": null, "created_at": "2021-07-22 02:02:17.076680", "exp_hash": "resnet18_v1"}

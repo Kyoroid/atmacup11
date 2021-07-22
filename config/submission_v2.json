@@ -1,0 +1,29 @@
+{
+    "device": "cuda:0",
+    "batch_size": 64,
+    "n_folds": 5,
+    "image_dir": "../dataset_atmaCup11/photos",
+    "train_csv": "../dataset_atmaCup11/train.csv",
+    "test_csv": "../dataset_atmaCup11/test.csv",
+    "submit_csv" : "./submit.csv",
+    "fold_0": {
+        "val_csv": "../dataset_atmaCup11/val_cv0.csv",
+        "ckpt_path": "./pl_logs_v2/resnet18/version_0/checkpoints/epoch=194-val_loss=77.82.ckpt"
+    },
+    "fold_1": {
+        "val_csv": "../dataset_atmaCup11/val_cv1.csv",
+        "ckpt_path": "./pl_logs_v2/resnet18/version_1/checkpoints/epoch=190-val_loss=77.98.ckpt"
+    },
+    "fold_2": {
+        "val_csv": "../dataset_atmaCup11/val_cv2.csv",
+        "ckpt_path": "./pl_logs_v2/resnet18/version_2/checkpoints/epoch=142-val_loss=80.68.ckpt"
+    },
+    "fold_3": {
+        "val_csv": "../dataset_atmaCup11/val_cv3.csv",
+        "ckpt_path": "./pl_logs_v2/resnet18/version_3/checkpoints/epoch=179-val_loss=76.74.ckpt"
+    },
+    "fold_4": {
+        "val_csv": "../dataset_atmaCup11/val_cv4.csv",
+        "ckpt_path": "./pl_logs_v2/resnet18/version_4/checkpoints/epoch=190-val_loss=76.95.ckpt"
+    }
+}

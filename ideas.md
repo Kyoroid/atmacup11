@@ -150,6 +150,7 @@
         - warmupなくてもある程度下がることは確認済み
         - 70/70/60, gamma=0.25
             - 終盤はもうちょっと長めに見てよさそう
+            - 時間がない...
     - Augmentation
         - 明るさやコントラストを変えてみる
             - むしろ悪化した。val_lossが90くらいで止まってしまう。
@@ -159,3 +160,33 @@
         - train: 0.7987
     - TTAあり (n_tta=4, seed=2021)
         - train: 0.7813
+- 提出
+   - TTAあり (n_tta=4, seed=2021)
+        - train: 0.7813
+        - public: 0.7504
+        - public(rounded): 0.7933
+
+- 結果発表
+    - pretrained でスコアの目標値を見積もる
+    - 1位解法
+        - SSL
+        - ResNet18w, EfficientNetv2, あと1つ
+    - [dino](https://github.com/facebookresearch/dino)
+        - 長く学習することが必要らしい
+            - 450epoch
+            - 300epochあたりで落ち始めるらしい
+        - お金の力
+            - LambdaPC (3090x2)
+        - オプティマイザはこだわらない
+            - AdamW
+        - targetの設計方法
+            - targetをそのまま
+            - targetをソフトラベルに変換
+    - 想定解法
+        - LightGBMでCSVの情報を取り込む
+            - regressionモデルとしてMaterial予測やると上がるらしい?
+    - その他
+        - SSLは使っている人がちらほら
+        - SimSiamは失敗の声多め
+        - Material予測は成功例あるのか?
+            - Multitaskで0.75くらい?
