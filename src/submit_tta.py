@@ -25,18 +25,18 @@ def main():
     device = torch.device(str(conf["device"]) if torch.cuda.is_available() else "cpu")
     size = 224
     tta_transform = A.Compose(
-            [
-                A.Flip(p=0.5),
-                A.PadIfNeeded(size + size, size + size),
-                A.RandomCrop(size, size, always_apply=True),
-                A.Normalize(
-                    mean=(0.77695272, 0.74355234, 0.67019692),
-                    std=(0.16900558, 0.16991152, 0.17102272),
-                    always_apply=True,
-                ),
-                ToTensorV2(),
-            ]
-        )
+        [
+            A.Flip(p=0.5),
+            A.PadIfNeeded(size + size, size + size),
+            A.RandomCrop(size, size, always_apply=True),
+            A.Normalize(
+                mean=(0.77695272, 0.74355234, 0.67019692),
+                std=(0.16900558, 0.16991152, 0.17102272),
+                always_apply=True,
+            ),
+            ToTensorV2(),
+        ]
+    )
 
     train_csv = Path(conf["train_csv"])
     test_csv = Path(conf["test_csv"])
@@ -63,9 +63,9 @@ def main():
         model.eval()
 
         val_dataset = AtmaTestDataset(val_csv, image_dir, transform=tta_transform)
-        n_size = len(DataLoader(
-            val_dataset, batch_size=batch_size, num_workers=1, shuffle=False
-        ))
+        n_size = len(
+            DataLoader(val_dataset, batch_size=batch_size, num_workers=1, shuffle=False)
+        )
 
         val_loaders = []
         for j in range(4):
@@ -87,9 +87,11 @@ def main():
         test_loader = DataLoader(
             test_dataset, batch_size=batch_size, num_workers=1, shuffle=False
         )
-        n_size = len(DataLoader(
-            test_dataset, batch_size=batch_size, num_workers=1, shuffle=False
-        ))
+        n_size = len(
+            DataLoader(
+                test_dataset, batch_size=batch_size, num_workers=1, shuffle=False
+            )
+        )
 
         test_loaders = []
         for j in range(4):

@@ -1,12 +1,13 @@
 import torch
-from torch.nn import Module, MSELoss
+from torch.nn import MSELoss
 
 
-class RMSELoss(Module):
-    def __init__(self):
-        super(RMSELoss, self).__init__()
+class RMSELoss(MSELoss):
+    def __init__(self, reduction: str = "mean", eps: float = 1e-5):
+        super().__init__(reduction=reduction)
+        self.eps = eps
 
-    def forward(self, x, y):
-        criterion = MSELoss()
-        loss = torch.sqrt(criterion(x, y) + 1e-8)
+    def forward(self, input, target):
+        criterion = super().forward(input, target)
+        loss = torch.sqrt(criterion + self.eps)
         return loss
