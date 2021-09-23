@@ -18,3 +18,4 @@ pytorch-lightning
 test_tube
 timm
 torch_optimizer
+lightly

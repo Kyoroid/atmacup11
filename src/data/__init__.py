@@ -1,2 +1,2 @@
 from .dataset import AtmaDataset, AtmaTestDataset
-from .datamodule import AtmaDataModule
+from .datamodule import AtmaDataModule, AtmaSimSiamDataModule
