@@ -107,3 +107,5 @@ class ResNet18TransferRegressor(ResNet18Regressor):
         self.encoder.load_state_dict(encoder_state_dict)
         for param in self.encoder.parameters():
             param.requires_grad = False
+        for param in self.encoder.fc.parameters():
+            param.requires_grad = True
