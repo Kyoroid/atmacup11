@@ -14,6 +14,8 @@ ARCH = {
     "resnet34": {"regressor": ResNet34Regressor},
     "resnet50": {"regressor": ResNet50Regressor},
     "efficientnetb0": {"regressor": EfficientNetB0Regressor},
+    "vit": {"regressor": ViTRegressor},
+    "vit_ssl": {"regressor": ViTRegressor},
 }
 
 
@@ -27,6 +29,7 @@ def main(
     seed: int,
     init_lr: int,
     ckpt_path: Path = None,
+    check_val_every_n_epoch: int = 1,
 ):
     pl.seed_everything(seed)
     datamodule = AtmaDataModule(image_dir, train_csv, val_csv, batch_size=64)
@@ -51,6 +54,7 @@ def main(
         gpus=1,
         max_epochs=max_epochs,
         logger=logger,
+        check_val_every_n_epoch=check_val_every_n_epoch,
         callbacks=[checkpoint_callback, lr_monitor],
     )
     trainer.fit(model, datamodule=datamodule)
@@ -64,7 +68,7 @@ def parse_args():
         type=str,
         default="resnet18",
         help="Base architecture.",
-        choices=["resnet18", "resnet34", "resnet50", "efficientnetb0"],
+        choices=["resnet18", "resnet34", "resnet50", "efficientnetb0", "vit"],
     )
     parser.add_argument(
         "--init_lr", type=float, default=1e-4, help="Learning rate at epoch 0."
@@ -92,6 +96,12 @@ def parse_args():
     )
     parser.add_argument("--seed", type=int, default=2021, help="Random seed.")
     parser.add_argument("--ckpt_path", type=Path, default=None, help="Checkpoint file.")
+    parser.add_argument(
+        "--check_val_every_n_epoch",
+        type=int,
+        default=1,
+        help="Check validation every N epoch.",
+    )
     args = parser.parse_args()
     return args
 

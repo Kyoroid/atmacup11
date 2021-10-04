@@ -11,6 +11,7 @@ from net import *
 
 ARCH = {
     "resnet18": {"regressor": ResNet18TransferRegressor},
+    "vit": {"regressor": ViTTransferRegressor},
 }
 
 
@@ -27,7 +28,9 @@ def main(
 ):
     pl.seed_everything(seed)
     datamodule = AtmaDataModule(image_dir, train_csv, val_csv, batch_size=64)
-    model = ResNet18TransferRegressor(learning_rate=init_lr, ckpt_path=ckpt_path)
+    model: BaseRegressor = ARCH[architecture]["regressor"](
+        learning_rate=init_lr, ckpt_path=ckpt_path
+    )
 
     logger = loggers.TestTubeLogger(logdir, name=architecture)
     lr_monitor = LearningRateMonitor(logging_interval="epoch")
@@ -56,10 +59,10 @@ def parse_args():
         type=str,
         default="resnet18",
         help="Base architecture.",
-        choices=["resnet18"],
+        choices=["resnet18", "vit"],
     )
     parser.add_argument(
-        "--init_lr", type=float, default=1e-4, help="Learning rate at epoch 0."
+        "--init_lr", type=float, default=1e-3, help="Learning rate at epoch 0."
     )
     parser.add_argument(
         "--image_dir", type=Path, default=root_dir / "photos", help="Image directory."

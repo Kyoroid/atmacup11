@@ -6,11 +6,12 @@ from pytorch_lightning.callbacks import (
     LearningRateMonitor,
     ModelCheckpoint,
 )
-from data.datamodule import AtmaSimSiamDataModule
+from data.datamodule import AtmaDataModule, AtmaSimSiamDataModule
 from net import *
 
 ARCH = {
     "resnet18_simsiam": {"regressor": ResNet18SimSiamRegressor},
+    "vit_dino": {"regressor": ViTDinoRegressor},
 }
 
 
@@ -25,12 +26,20 @@ def main(
     batch_size: int,
 ):
     pl.seed_everything(seed)
-    datamodule = AtmaSimSiamDataModule(
-        image_dir, train_csv, val_csv, batch_size=batch_size
-    )
-    model: ResNet18SimSiamRegressor = ARCH[architecture]["regressor"](
-        learning_rate=0.05 * batch_size / 256
-    )
+    if architecture == "resnet18_simsiam":
+        datamodule = AtmaSimSiamDataModule(
+            image_dir, train_csv, val_csv, batch_size=batch_size
+        )
+        model: ResNet18SimSiamRegressor = ARCH[architecture]["regressor"](
+            learning_rate=0.05 * batch_size / 256
+        )
+    elif architecture == "vit_dino":
+        datamodule = AtmaDataModule(
+            image_dir, train_csv, val_csv, batch_size=batch_size
+        )
+        model: ViTDinoRegressor = ARCH[architecture]["regressor"](
+            learning_rate=0.05 * batch_size / 256
+        )
 
     logger = loggers.TestTubeLogger(logdir, name=architecture)
     lr_monitor = LearningRateMonitor(logging_interval="epoch")
@@ -38,7 +47,7 @@ def main(
         monitor=None,
         filename="epoch={epoch}-train_loss={loss/train:.2f}",
         auto_insert_metric_name=False,
-        every_n_epochs=50,
+        every_n_epochs=100,
         save_top_k=-1,
     )
     trainer = pl.Trainer(
@@ -61,6 +70,7 @@ def parse_args():
         help="Base architecture.",
         choices=[
             "resnet18_simsiam",
+            "vit_dino",
         ],
     )
     parser.add_argument(
@@ -79,7 +89,7 @@ def parse_args():
         help="Location of val_cvX.csv.",
     )
     parser.add_argument(
-        "--max_epochs", type=int, default=500, help="Max number of epochs."
+        "--max_epochs", type=int, default=1000, help="Max number of epochs."
     )
     parser.add_argument("--batch_size", type=int, default=64, help="Batch size.")
     parser.add_argument(

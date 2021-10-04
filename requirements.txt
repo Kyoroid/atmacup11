@@ -19,3 +19,4 @@ test_tube
 timm
 torch_optimizer
 lightly
+vit-pytorch
